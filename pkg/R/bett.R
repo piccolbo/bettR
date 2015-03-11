@@ -36,12 +36,3 @@ decorate =
                 as.list(match.call()[-1])))))}
     formals(g) = c(formals(f), as.pairlist(add.args))
     g}
-
-
-function (x, y = 1, ...)
-{
-  if (x > 1)
-    print("greater")
-  mc = match.call()
-  do.call(f, as.list(mc)[-1])
-}
