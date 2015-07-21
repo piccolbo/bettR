@@ -1,4 +1,2 @@
-export(qw)
-export(`%|%`)
-export(decorate)
+exportPattern(".*")
 import(lazyeval)
