@@ -18,7 +18,7 @@ decorate(f, pre = alist, post = identity,  add.args = NULL)
 }
 \value{Any R object}
 \examples{
-
+decorate(library, post = suppressWarnings)
 }
 
 
