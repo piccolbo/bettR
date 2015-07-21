@@ -23,16 +23,31 @@ qw =
         else
           stop("Don't know how to pipe THAT!")}}}
 
-decorate =
-  function(f, pre = alist, post = identity, add.args = NULL) {
-    g =
+
+arglist =
+  function(match = FALSE) {
+    call = {
+      if(match)
+        match.call(definition = sys.function(which = -1), call = sys.call(sys.parent()))
+      else
+        sys.call(which = -1)}
+    lapply(as.list(call[-1]), eval.parent)}
+
+mandatory =
+  function(name)
+    stop("Argument ", name, " is missing with no default")
+
+constructor =
+  function(class, fields){
+    f =
       function() {
-        post(
-          do.call(
-            f,
-            as.list(
-              do.call(
-                pre,
-                as.list(match.call()[-1])))))}
-    formals(g) = c(formals(f), as.pairlist(add.args))
-    g}
+        args = arglist(match = TRUE)
+        stopifnot(all(sort(names(args)) == sort(fields)))
+        structure(
+          args,
+          class = class)}
+    args = lapply(fields, function(.) alist(. = )$.)
+    names(args) = fields
+    departial(f, .args = args)}
+
+
