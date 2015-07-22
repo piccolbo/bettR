@@ -103,58 +103,65 @@ nodefault =
 
 deapply =
   function(x, ..., .args = alist()) {
-    formals(x) = c(formals(x), pryr::dots(...), .args)
+    formals(x) = c(formals(x), dots(...), .args)
     x }
 
-partial =
-  function(x, ..., .args = list()) {
-    #get matched args for x from ...
-    args =
-      as.list(
-        match.call(
-          x,
-          do.call(
-            call,
-            c(list("x"), list(...), .args),
-            quote = TRUE)))[-1]
-    # tuck those args in an env under current x's env hierarchy
-    environment(x) = list2env(args, NULL, environment(x))
-    # zap them from signature
-    ii = match(names(args), names(formals(x)))
-    formals(x) = formals(x)[-ii]
-    #dish out
-    x}
+# partial =
+#   function(x, ..., .args = list()) {
+#     #get matched args for x from ...
+#     args =
+#       as.list(
+#         match.call(
+#           x,
+#           do.call(
+#             call,
+#             c(list("x"), list(...), .args),
+#             quote = TRUE)))[-1]
+#     # tuck those args in an env under current x's env hierarchy
+#     environment(x) = list2env(args, NULL, environment(x))
+#     # zap them from signature
+#     ii = match(names(args), names(formals(x)))
+#     formals(x) = formals(x)[-ii]
+#     #dish out
+#     x}
 
-partial2 =
-  function(x, ..., .args = alist()) {
-    #get matched args for x from ...
-    args =
+partial =
+  function(f, ..., .args = alist()) {
+    #get  args to apply f to first from ... and .args via matching
+    .applied =
       as.list(
         match.call(
-          x,
-          do.call(
-            call,
-            c(list("x"), pryr::named_dots(...), .args),
-            quote = TRUE)))[-1]
-    ii = purrr::discard(match(names(args), names(formals(x))), is.na)
-    ii = if(length(ii) > 0) -ii else T
-    pryr::make_function(
-      formals(x)[ii],
-      pryr::make_call(
-        x,
-        c(args, lapply(names(formals(x)[ii]), as.name))))}
+          f,
+          make_call("f", c(dots(...), .args))))[-1]
+    #rest to be applied to later
+    formf = formals(f)
+    ii = discard(match(names(.applied), names(formf)), is.na)
+    ii = if(length(ii) > 0) -ii else TRUE
+    .unapplied = formf[ii]
+    #make function of later args
+    pf = parent.frame()
+    make_function(
+      .unapplied,
+      make_call(
+        f,
+        c(.applied, lapply(names(.unapplied), as.name))),
+      env = pf)}
 
 curry =
   function(f) {
     formf = formals(f)
-    if(length(formf) <= 1)
+    lff = length(formf)
+    if(lff == 0 || (lff == 1 && names(formf) != "..."))
       f
     else {
-      pryr::make_function(
+      make_function(
         formf[1],
         quote({
-          args = arglist()
-          curry(
-            partial(
-              f,
-              .args = args))}))}}
+          args = arglist(lazy = TRUE)
+          if(length(args) > 0)
+            curry(
+              partial(
+                f,
+                .args = args))
+          else
+            f()}))}}

@@ -7,4 +7,4 @@ Author: Antonio Piccolboni <antonio@piccolboni.info>
 Maintainer: Betty R. Piccolboni <bettr@piccolboni.info>
 Description: Experiments with language extensions
 License: Apache (=2.0)
-Imports:lazyeval
+Imports: pryr, purrr

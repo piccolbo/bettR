@@ -1,0 +1,85 @@
+---
+output: html_fragment
+---
+```{r echo = FALSE}
+library(knitr)
+opts_chunk$set(comment = "#")
+```
+In R, `functional::Curry` is a misnomer at best. Let's implement currying in R.
+
+<!-- more -->
+
+I've always wondered why the function `Curry` in package `functional` for the language R is named that way when it actually implements partial application. What it does is transfroming a function into another one with a smaller number of arguments, which is very useful when a program contains several calls to the same function with some arguments varying and some fixed. Instead of cutting and pasting them, a no-no of [ascetic programming](http://asceticprogrammer.info), we can create a function that doesn't need these repetitive arguments via partial application.
+
+Let's say you want to simulate dice throwing. You can define a `dice` function:
+
+```{r}
+suppressMessages(library(bettR))
+dice = function(size) sample(1:6, size)
+dice(3)
+```
+
+Or you can use partial application:
+
+```{r}
+dice = partial(sample, 1:6)
+dice(3)
+```
+
+The advantage of the latter may not be obvious when there are so few arguments involved. But you may have noticed that in the first case we had to write `size` twice, with the only goal of forwarding the argument from the `dice` function to `sample`. If we wanted to model biased dice, we would have to forward also the `prob` argument, and so on for every other argument that's not applied to right away. With partial, we are just specifying the value of some arguments and let the other "pass through" with no red-tape.
+
+Currying uses partial application to the extreme, if you wish, transforming a function of many arguments into a function of a single argument, that returns a function of a single argument ... until the last function which returns whatever value. It allows to write `f(1,2,3)`  as `curry(f)(1)(2)(3)`. Is that useful for programming? The evidence is in favor of a positive answer. If partial application is useful, curried functions make partial application seamless. For instance `(* 5)` is a function in Haskell implementing multiplication by 5 of its single argument. `*` is a function of two arguments but is also implicitly curried -- provide one argument and you get a function of the remaining one. Scala also allows to define methods with multiple argument lists, that is curried functions (it actually is a generalization of the concept). That said, one can make a reasonable living programming without ever currying a single function. Nonetheless, implementing currying for any language is a great exercise in functional programming.
+
+## Partial application
+
+While partial application is not currying, it's a first step. If we have a function with many arguments and we can remove one, we are one step closer to a function of a single argument. As we discussed at the beginning, R has a function called `Curry` that performs partial application. Unfortunately, `Curry` also zaps the argument list which becomes only `...`. While it seems reasonable to expect a function of $n$ arguments to have $n - 1$ arguments upon partial application to a single argument, `Curry` makes that a variable number. So does function `partial` in packages `purrr` and `pryr`. Not only it's nice to have a list of arguments for argument checking, documentation and automatic completion, but, with the specific goal of implementing currying, we need to remove arguments one at a time. Once we have the single `...` argument, we are stuck. So I gave it a shot and the result is the following.
+
+```{r comment=NULL}
+bettR::partial
+```
+
+It may look simple and hopefully it is, but there was a certain amount of trial-and-error and research involved to take care of both standard and non-standard evaluation and named and unnamed arguments. I can't exclude I have overlooked something, but here are some examples.
+
+```{r}
+ff = function(a, b, c) list(a, b, c)
+pff = partial(ff, a = 1)
+pff
+pff(c = 3, 2) #named and unnamed
+suppressMessages(library(dplyr))
+ff = partial(select, mtcars, mpg) #one lazy and one regular argument
+ff
+ff(carb)[1:5, ]
+```
+
+```{r echo = FALSE}
+library(knitr)
+opts_chunk$set(comment = "#")
+```
+
+## From `partial` to `curry`
+
+Let's say we want to curry function `ff`. The general plan is to build a function of the first argument of `ff` that uses `partial` to lock the first argument of ff to the value of its only argument and then, recursively, calls curry on the function thus created. Eventually, we are left with a function of a single argument, which we can return as is. The special case for the `...` argument and a zero-argument invocation is explained later.
+
+
+```{r comment=NULL}
+bettR::curry
+```
+
+```{r}
+
+ff = function(a,b,c ) list(a,b,c)
+cuff = curry(ff)
+cuff(1)
+cuff(1)(2)
+cuff(1)(2)(3)
+```
+
+And there you have it, hot delicious R curry! With the `...` argument it's harder to decide when to stop the recursion. I decided to extend currying to that case by ending the sequence of application with a zero-argument call, that is
+
+
+```{r}
+curry(select)(mtcars)(mpg)(carb)(disp)
+curry(select)(mtcars)(mpg)(carb)(disp)()[1:5, ] 
+```
+
+If you wonder what the `bettR` package is, where this delicious stuff is cooking, it's my playground of ideas to make R into a better language. It's on github but I need to warn you that it's in "research" mode and it's not ready for either prime or subprime time. 

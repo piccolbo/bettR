@@ -25,13 +25,17 @@ qw =
 
 
 arglist =
-  function(match = FALSE) {
+  function(match = FALSE, lazy = FALSE) {
     call = {
       if(match)
         match.call(definition = sys.function(which = -1), call = sys.call(sys.parent()))
       else
         sys.call(which = -1)}
-    lapply(as.list(call[-1]), eval.parent)}
+    lazy.args = as.list(call[-1])
+    if(lazy)
+      lazy.args
+    else
+      lapply(lazy.args, eval.parent)}
 
 mandatory =
   function(name)
