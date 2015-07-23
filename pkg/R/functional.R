@@ -106,25 +106,6 @@ deapply =
     formals(x) = c(formals(x), dots(...), .args)
     x }
 
-# partial =
-#   function(x, ..., .args = list()) {
-#     #get matched args for x from ...
-#     args =
-#       as.list(
-#         match.call(
-#           x,
-#           do.call(
-#             call,
-#             c(list("x"), list(...), .args),
-#             quote = TRUE)))[-1]
-#     # tuck those args in an env under current x's env hierarchy
-#     environment(x) = list2env(args, NULL, environment(x))
-#     # zap them from signature
-#     ii = match(names(args), names(formals(x)))
-#     formals(x) = formals(x)[-ii]
-#     #dish out
-#     x}
-
 partial =
   function(f, ..., .args = alist()) {
     #get  args to apply f to first from ... and .args via matching
@@ -165,3 +146,15 @@ curry =
                 .args = args))
           else
             f()}))}}
+
+autopartial =
+  function(f) {
+    ap =
+      function() {
+        args = arglist(lazy = TRUE)
+        if(length(args) < length(formals(f)))
+          do.call(partial, list(f = f, .args = args))
+        else
+          do.call(f, args)}
+    formals(ap) = formals(f)
+    ap}
