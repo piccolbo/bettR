@@ -152,9 +152,13 @@ autopartial =
     ap =
       function() {
         args = arglist(lazy = TRUE)
-        if(length(args) < length(formals(f)))
-          do.call(partial, list(f = f, .args = args))
+        mandatory =
+          keep(
+            formals(f),
+            function(x) is.name(x) && as.character(x) == "")
+        if(all(names(mandatory) %in% names(args)))
+          do.call(f, args)
         else
-          do.call(f, args)}
+          do.call(partial, list(f = f, .args = args))}
     formals(ap) = formals(f)
     ap}
