@@ -165,3 +165,84 @@ autopartial =
           do.call(partial, list(f = f, .args = args))}
     formals(ap) = formals(f)
     ap}
+
+#return all args to a function, evaluated, as a list
+all.args =
+  function(fun, matched.call) {
+    args = formals(fun)
+    actual.args = as.list(matched.call)[-1]
+    nact = names(actual.args)
+    args[nact] = actual.args[nact]
+    lapply(args, eval, envir = parent.frame(2))}
+
+# a default argument for a mandatory argument
+nodefault =
+mandatory =
+  function(name)
+    stop("Argument ", name, " missing with no default")
+
+# function families
+# create families of function around reusable element such as arguments
+
+# reusable argument
+a =
+  Argument =
+  function(
+    name, #name of the argument
+    priority, #priority when deciding order
+    default = ~mandatory(name), #default value
+    validate = function(x) TRUE, #validate argument
+    process = identity) { #transform argument
+    args = all.args(a,  match.call())
+    stopifnot(identical(default, ~mandatory(name)) || validate(default))
+    structure(
+      args,
+      class = "Argument")}
+
+as.Argument = function(x, ...) UseMethod("as.Argument")
+
+as.Argument.list =
+  function(x, ...)
+    map(
+      names(x),
+      ~Argument(
+        name = .,
+        priority = NA,
+        default = x[[.]]))
+
+as.Argument.default =
+  function(x, ...)
+    as.Argument(as.list(x))
+
+# reusable function defs
+f =
+  Function =
+  function(..., body = NULL, export = TRUE) {
+    fargs = list(...)
+    names(fargs) = map(fargs, "name")
+    if(is.null(body)){
+      body = tail(fargs, 1)[[1]]
+      fargs = fargs[-length(fargs)]}
+    pre =
+      function(){
+        args = all.args(pre, match.call())
+        setNames(
+          lapply(
+            names(args),
+            function(n) {
+              stopifnot(fargs[[n]]$validate(args[[n]]))
+              fargs[[n]]$process(args[[n]])}),
+          nm = names(args))}
+    core = function(){}
+    body(core) = as.list(body)[[2]]
+    retval = function() {
+      do.call(core, do.call(pre, all.args(retval, match.call())))}
+    vals = map(fargs, "default")
+    formals(pre) =
+      formals(core) =
+      formals(retval) =
+      setNames(
+        object = vals ,
+        nm = map(fargs, "name"))
+    retval}
+
