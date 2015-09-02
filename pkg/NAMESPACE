@@ -1,4 +1,4 @@
-exportPattern(".*")
+exportPattern("[^\\.]$")
 import(purrr)
 importFrom(pryr, make_function)
 importFrom(pryr, make_call)
