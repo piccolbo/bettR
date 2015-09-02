@@ -17,7 +17,9 @@ decorate =
     formals(g) = c(formals(f), as.pairlist(add.args))
     g}
 
-
+# function combinators HIGHLY EXPERIMENTAL
+# function that does all that f and g and has all of their args
+# returns a concatenation of retval of retvals
 parallel =
   function(f,g) {
     h =
@@ -29,6 +31,8 @@ parallel =
     formals(h) = c(formals(f), formals(g))
     h}
 
+# same as above but this take lists of arguments to pass to each function and returns retvals in a list
+# the other one is flatter, this one more general
 parallel2 =
   function(f,g)
     function(left, right)
@@ -53,6 +57,9 @@ pipe2 =
     formals(h) = formals(g)
     h}
 
+#same for many functions
+# original use of ...
+# fun1 fun2 optional argmap fun3 optional argmap ...
 pipe =
   function(...){
     args = list(...)
@@ -66,6 +73,7 @@ pipe =
     else
       pipe(first, args[(if(is.function(args[[2]])) 3 else 4):length(args)])}
 
+#pipe operator a la magrittr, only simple to define and understand
 pipe2a =
   `%|%` =
   function(left, right){
@@ -92,11 +100,16 @@ nodefault =
   function(argname)
     stop("Argument ", argname, "missing with no default")
 
+# the opposite of partial
+# not sure what it means exactly yet
 deapply =
   function(x, ..., .args = alist()) {
     formals(x) = c(formals(x), dots(...), .args)
     x }
 
+# partial application done right
+# keeps all the relevant args in the signature
+# see http://piccolboni.info/2015/07/delicious-r-curry.html
 partial =
   function(f, ..., .args = alist()) {
     #get  args to apply f to first from ... and .args via matching
@@ -119,6 +132,8 @@ partial =
         c(.applied, lapply(names(.unapplied), as.name))),
       env = pf)}
 
+# real curry
+# see http://piccolboni.info/2015/07/delicious-r-curry.html
 curry =
   function(f) {
     formf = formals(f)
@@ -138,6 +153,7 @@ curry =
           else
             f()}))}}
 
+# make a function return a partial application when mandatory args are missing
 autopartial =
   function(f) {
     ap =
