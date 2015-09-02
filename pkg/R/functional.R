@@ -1,17 +1,8 @@
-#"Compose"                "Curry"                  "CurryL"                 "Identity"               "multi.argument.Compose"
-#Reduce(f, x, init, right = FALSE, accumulate = FALSE)
-# Filter(f, x)
-# Find(f, x, right = FALSE, nomatch = NULL)
-# Map(f, ...)
-# Negate(f)
-# Position(f, x, right = FALSE, nomatch = NA_integer_)
-
-
-#UnCurry adds argument to a function, instead of removing them
-#workflow composes functions of multiple args by name
-#
-#
-
+#decorators a la Python
+# f function to decorate
+# pre  preprocessing of args
+# post postprocessing of function retval
+# add.args additional args to the decorated function
 decorate =
   function(f, pre = alist, post = identity, add.args = NULL) {
     g =
