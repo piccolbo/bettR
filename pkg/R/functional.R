@@ -96,10 +96,6 @@ pipe2a =
         else
           stop("Don't know how to pipe THAT!")}}}
 
-nodefault =
-  function(argname)
-    stop("Argument ", argname, "missing with no default")
-
 # the opposite of partial
 # not sure what it means exactly yet
 deapply =
