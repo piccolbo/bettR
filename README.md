@@ -28,4 +28,4 @@ args(library.quiet)
 ## NULL
 ```
 
-Now this new function has the same signature as library, accepts the same arguments and doesn't emit pesky startup messages. Eureka.
+Now this new function has the same signature as library, accepts the same arguments and doesn't emit pesky startup messages. Eureka. With decorate we can pre-process the arguments, post-process the return value and add additional arguments. 
