@@ -4,7 +4,7 @@ Title: Ideas for a better R language
 Version: 0.0.0
 Date: 2015-03-05
 Author: Antonio Piccolboni <antonio@piccolboni.info>
-Maintainer: Betty R. Piccolboni <bettr@piccolboni.info>
+Maintainer: Antonio Piccolboni <antonio@piccolboni.info>
 Description: Experiments with language extensions
-License: Apache (=2.0)
+License: GPL (>= 2)
 Imports: pryr, purrr
