@@ -17,84 +17,6 @@ decorate =
     formals(g) = c(formals(f), as.pairlist(add.args))
     g}
 
-# function combinators HIGHLY EXPERIMENTAL
-# function that does all that f and g and has all of their args
-# returns a concatenation of retval of retvals
-parallel =
-  function(f,g) {
-    h =
-      function(){
-        args = arglist(TRUE)
-        c(
-          do.call(f, args[names(formals(f))]),
-          do.call(g, args[names(formals(g))]))}
-    formals(h) = c(formals(f), formals(g))
-    h}
-
-# same as above but this take lists of arguments to pass to each function and returns retvals in a list
-# the other one is flatter, this one more general
-parallel2 =
-  function(f,g)
-    function(left, right)
-      list(
-        left = do.call(f, as.list(left)),
-        right = do.call(g, as.list(right)))
-
-#piping for list functions
-#make the output of one function the argument list for the next
-#allows renaming of list elements
-pipe2 =
-  function(g, f, argmap = NULL) {
-    h =
-      function(){
-        args = as.list(sys.call())[-1]
-        do.call(
-          f,
-          if(is.null(argmap))
-            do.call(g, args)
-          else
-            plyr::rename(do.call(g, args), argmap))}
-    formals(h) = formals(g)
-    h}
-
-#same for many functions
-# original use of ...
-# fun1 fun2 optional argmap fun3 optional argmap ...
-pipe =
-  function(...){
-    args = list(...)
-    first = {
-      if(length(args) == 2 || is.function(args[[2]]))
-        pipe2(args[[1]], args[[2]])
-      else
-        pipe2(args[[1]], args[[3]], argmap = args[[2]])}
-    if(length(args) < 4)
-      first
-    else
-      pipe(first, args[(if(is.function(args[[2]])) 3 else 4):length(args)])}
-
-#pipe operator a la magrittr, only simple to define and understand
-pipe2a =
-  `%|%` =
-  function(left, right){
-    subsright = substitute(right)
-    lazyright = lazy(right)
-    if(".." %in% all.vars(subsright))
-      lazy_eval(lazyright, list(.. = left))
-    else {
-      if(is.call(subsright)) {
-        lsr = as.list(subsright)
-        do.call(
-          as.character(
-            lsr[1]),
-          c(substitute(left),
-            lsr[-1]),
-          envir = lazyright$env)}
-      else{
-        if(is.function(right))
-          right(left)
-        else
-          stop("Don't know how to pipe THAT!")}}}
 
 # the opposite of partial
 # not sure what it means exactly yet
@@ -109,23 +31,25 @@ deapply =
 partial =
   function(f, ..., .args = alist()) {
     #get  args to apply f to first from ... and .args via matching
-    .applied =
+    applied =
       as.list(
         match.call(
           f,
           make_call("f", c(dots(...), .args))))[-1]
+    #      c(dots(...), .args)
     #rest to be applied to later
     formf = formals(f)
-    ii = discard(match(names(.applied), names(formf)), is.na)
+    ii = discard(match(names(applied), names(formf)), is.na)
     ii = if(length(ii) > 0) -ii else TRUE
-    .unapplied = formf[ii]
+    unapplied = formf[ii]
     #make function of later args
     pf = parent.frame()
+    unapplied.names =  lapply(names(unapplied), as.name)
     make_function(
-      .unapplied,
+      unapplied,
       make_call(
         f,
-        c(.applied, lapply(names(.unapplied), as.name))),
+        c(applied, unapplied.names)),
       env = pf)}
 
 # real curry
@@ -175,74 +99,22 @@ all.args =
     args[nact] = actual.args[nact]
     lapply(args, eval, envir = parent.frame(2))}
 
-# a default argument for a mandatory argument
-nodefault =
-mandatory =
-  function(name)
-    stop("Argument ", name, " missing with no default")
+# a different version of the above that tries to do without arguments and has
+# a lazy version
+#
+arglist =
+  function(match = FALSE, lazy = FALSE) {
+    call = {
+      if(match)
+        match.call(definition = sys.function(which = -1), call = sys.call(sys.parent()))
+      else
+        sys.call(which = -1)}
+    lazy.args = as.list(call[-1])
+    if(lazy)
+      lazy.args
+    else
+      lapply(lazy.args, eval.parent)}
 
-# function families
-# create families of function around reusable element such as arguments
 
-# reusable argument
-a =
-  Argument =
-  function(
-    name, #name of the argument
-    priority, #priority when deciding order
-    default = ~mandatory(name), #default value
-    validate = function(x) TRUE, #validate argument
-    process = identity) { #transform argument
-    args = all.args(a,  match.call())
-    stopifnot(identical(default, ~mandatory(name)) || validate(default))
-    structure(
-      args,
-      class = "Argument")}
 
-as.Argument = function(x, ...) UseMethod("as.Argument")
-
-as.Argument.list =
-  function(x, ...)
-    map(
-      names(x),
-      ~Argument(
-        name = .,
-        priority = NA,
-        default = x[[.]]))
-
-as.Argument.default =
-  function(x, ...)
-    as.Argument(as.list(x))
-
-# reusable function defs
-f =
-  Function =
-  function(..., body = NULL, export = TRUE) {
-    fargs = list(...)
-    names(fargs) = map(fargs, "name")
-    if(is.null(body)){
-      body = tail(fargs, 1)[[1]]
-      fargs = fargs[-length(fargs)]}
-    pre =
-      function(){
-        args = all.args(pre, match.call())
-        setNames(
-          lapply(
-            names(args),
-            function(n) {
-              stopifnot(fargs[[n]]$validate(args[[n]]))
-              fargs[[n]]$process(args[[n]])}),
-          nm = names(args))}
-    core = function(){}
-    body(core) = as.list(body)[[2]]
-    retval = function() {
-      do.call(core, do.call(pre, all.args(retval, match.call())))}
-    vals = map(fargs, "default")
-    formals(pre) =
-      formals(core) =
-      formals(retval) =
-      setNames(
-        object = vals ,
-        nm = map(fargs, "name"))
-    retval}
 
