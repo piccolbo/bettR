@@ -31,11 +31,16 @@ deapply =
 partial =
   function(f, ..., .args = alist()) {
     #get  args to apply f to first from ... and .args via matching
+    names(.args) = {
+      if(is.null(names(.args))) as.character(.args)
+      else
+        ifelse(names(.args) == "", as.character(.args), names(.args))}
+    all.args = c(pryr::named_dots(...), .args)
     applied =
       as.list(
         match.call(
           f,
-          make_call("f", c(dots(...), .args))))[-1]
+          make_call("f", all.args)))[-1]
     #      c(dots(...), .args)
     #rest to be applied to later
     formf = formals(f)
