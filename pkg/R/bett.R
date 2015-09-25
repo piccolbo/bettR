@@ -2,44 +2,6 @@ qw =
   function(...)
     as.character(match.call())[-1]
 
-`%|%` =
-  function(left, right){
-    subsright = substitute(right)
-    lazyright = lazy(right)
-    if(".." %in% all.vars(subsright))
-      lazy_eval(lazyright, list(.. = left))
-    else {
-      if(is.call(subsright)) {
-        lsr = as.list(subsright)
-        do.call(
-          as.character(
-            lsr[1]),
-          c(substitute(left),
-            lsr[-1]),
-          envir = lazyright$env)}
-      else{
-        if(is.function(right))
-          right(left)
-        else
-          stop("Don't know how to pipe THAT!")}}}
-
-
-arglist =
-  function(match = FALSE, lazy = FALSE) {
-    call = {
-      if(match)
-        match.call(definition = sys.function(which = -1), call = sys.call(sys.parent()))
-      else
-        sys.call(which = -1)}
-    lazy.args = as.list(call[-1])
-    if(lazy)
-      lazy.args
-    else
-      lapply(lazy.args, eval.parent)}
-
-mandatory =
-  function(name)
-    stop("Argument ", name, " is missing with no default")
 
 constructor =
   function(class, fields){
@@ -53,5 +15,29 @@ constructor =
     args = lapply(fields, function(.) alist(. = )$.)
     names(args) = fields
     departial(f, .args = args)}
+
+named.args =
+  function(...)
+    lapply(pryr::named_dots(...), eval, envir = parent.frame())
+
+#OOP
+
+getters =
+  function(x, names = NULL, create = FALSE) {
+    if(missing(names)) {
+      names ={
+        if(isS4(x))
+          slotNames(x)
+        else
+          names(x)}}
+    funs =
+      setNames(
+      map(
+        names,
+        ~function(x) if(isS4(x)) slot(x, .) else x[[.]]),
+      names)
+    if(create)
+      map(names, ~assign(., funs[[.]], envir = parent.frame()))}
+
 
 
