@@ -1,7 +1,7 @@
 # function families
 # create families of function around reusable element such as arguments
 
-# a default argument for a mandatory argument
+# a default value for a mandatory argument
 nodefault =
   mandatory =
   function(name)
