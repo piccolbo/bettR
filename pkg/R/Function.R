@@ -24,15 +24,6 @@ A = Argument =
 
 as.Argument = function(x, ...) UseMethod("as.Argument")
 
-as.Argument.list =
-  function(x, ...)
-    map(
-      names(x),
-      ~Argument(
-        name = .,
-        priority = NA,
-        default = x[[.]]))
-
 as.Argument.default =
   function(x, ...)
     as.Argument(as.list(x))
