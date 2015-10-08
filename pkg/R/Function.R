@@ -29,13 +29,14 @@ as.Argument.default =
     as.Argument(as.list(x))
 
 # reusable function defs
-  function(..., body = NULL, export = TRUE, help = NULL, tests = list()) {
 F = Function =
+  function(..., body = NULL, export = TRUE, help = NULL, tests = list(), precondition = NULL, postcondition = NULL, args = NULL) {
     fargs = list(...)
     names(fargs) = map(fargs, "name")
     if(is.null(body)){
       body = tail(fargs, 1)[[1]]
       fargs = fargs[-length(fargs)]}
+    fargs = c(fargs, args)
     pre =
       function(){
         args = all.args(pre, match.call())
@@ -44,12 +45,15 @@ F = Function =
             names(args),
             function(n) {
               stopifnot(fargs[[n]]$validate(args[[n]]))
+              stopifnot(is.null(precondition) || precondition(args))
               fargs[[n]]$process(args[[n]])}),
           nm = names(args))}
     core = function(){}
     body(core) = as.list(body)[[2]]
     retval = function() {
-      do.call(core, do.call(pre, all.args(retval, match.call())))}
+      retval = do.call(core, do.call(pre, all.args(retval, match.call())))
+      stopifnot(is.null(postcondition) || postcondition(retval))
+      retval}
     vals = map(fargs, "default")
     formals(pre) =
       formals(core) =
