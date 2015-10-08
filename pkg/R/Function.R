@@ -16,7 +16,7 @@ A = Argument =
     validate = function(x) TRUE, #validate argument
     process = identity,
     help = NULL) { #transform argument
-    args = all.args(a,  match.call())
+    args = all.args(A,  match.call())
     stopifnot(identical(default, ~mandatory(name)) || validate(default))
     structure(
       args,
