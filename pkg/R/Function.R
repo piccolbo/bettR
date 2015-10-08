@@ -8,8 +8,7 @@ nodefault =
     stop("Argument ", name, " missing with no default")
 
 # reusable argument
-a =
-  Argument =
+A = Argument =
   function(
     name, #name of the argument
     priority, #priority when deciding order
@@ -39,9 +38,8 @@ as.Argument.default =
     as.Argument(as.list(x))
 
 # reusable function defs
-f =
-  Function =
   function(..., body = NULL, export = TRUE, help = NULL, tests = list()) {
+F = Function =
     fargs = list(...)
     names(fargs) = map(fargs, "name")
     if(is.null(body)){
