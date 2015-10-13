@@ -7,4 +7,4 @@ Author: Antonio Piccolboni <antonio@piccolboni.info>
 Maintainer: Antonio Piccolboni <antonio@piccolboni.info>
 Description: Experiments with language extensions
 License: GPL (>= 2)
-Imports: pryr, purrr
+Imports: pryr, purrr, markdown

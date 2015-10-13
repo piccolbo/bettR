@@ -1,5 +1,6 @@
 exportPattern("[^\\.]$")
 import(purrr)
+import(markdown)
 importFrom(pryr, make_function)
 importFrom(pryr, make_call)
 importFrom(pryr, dots)

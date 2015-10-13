@@ -61,8 +61,12 @@ F = Function =
       setNames(
         object = vals ,
         nm = map(fargs, "name"))
+    if(is.null(help$args))
+      help$args = paste("\n", names(fargs), "\n:   ", unlist(map(fargs, bettR::help)))
+    if(is.null(help$usage))
+      help$usage = paste(head(deparse(args(core)), -1), collapse = "\n")
     structure(
       retval,
       class = "Function",
-      help = paste(help, names(fargs), unlist(map(fargs, bettR::help))),
+      help = help,
       tests = tests)}
